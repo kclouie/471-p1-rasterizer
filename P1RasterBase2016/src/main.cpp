@@ -7,6 +7,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 #include "Image.h"
+#include "Triangle.h"
 
 // This allows you to skip the `std::` in front of C++ standard library
 // functions. You can also say `using std::cout` to be more selective.
@@ -85,9 +86,10 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
 int main(int argc, char **argv)
 {
 	if(argc < 3) {
-      cout << "Usage: Assignment1 meshfile imagefile colormode" << endl;
-      return 0;
-   }
+		cout << "Usage: Assignment1 inputfile meshfile width height colormode" << endl;
+    		return 0;
+   	}
+
 	// OBJ filename
 	string meshName(argv[1]);
 	string imgName(argv[2]);
