@@ -78,8 +78,65 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
          shapes[i].mesh.positions[3*v+2] = (shapes[i].mesh.positions[3*v+2] - shiftZ) * scaleZ;
          assert(shapes[i].mesh.positions[3*v+2] >= -1.0 - epsilon);
          assert(shapes[i].mesh.positions[3*v+2] <= 1.0 + epsilon);
+
       }
    }
+}
+
+void w2pX(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top){
+	cout << "wX = " << shapes[i].mesh.positions[coord] << endl;
+	float scale, shift;
+	scale = (g_width - 1)/(right - left);
+	shift = (-left)*((g_width-1)/(right-left));
+	int val = scale*shapes[i].mesh.positions[coord]+shift;
+	shapes[i].mesh.positions[coord] = val;
+	cout << "pX = " << shapes[i].mesh.positions[coord] << endl;
+}
+
+void w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top){
+	cout << "wY = " << shapes[i].mesh.positions[coord] << endl;
+	float scale, shift;
+	scale = (g_height - 1)/(top - bottom);
+	shift = (-bottom)*((g_height - 1)/(top - bottom));
+	int val = scale*shapes[i].mesh.positions[coord]+shift;
+	shapes[i].mesh.positions[coord] = val;
+        cout << "pY = " << shapes[i].mesh.positions[coord] << endl;
+}
+
+void rasterize(std::vector<tinyobj::shape_t> &shapes){
+//	cout << "**** BEGIN RASTERIZE() ****" << endl;
+	float left, right, bottom, top;
+
+//      compute R,L,T,B
+	if (g_width > g_height){
+		left = -(g_width/g_height);
+		right = (g_width/g_height);
+		bottom = -1;
+		top = 1;
+	}
+	else {
+		left = -1;
+		right = 1;
+		bottom = -(g_height/g_width);
+		top = (g_height/g_width);
+	}
+
+//	cout << "wX = " << shapes[0].mesh.positions[1] << endl;
+
+//      for each vertex (xyz), use R,L,T,B to find mapped X and Y for each
+	for (int i = 0; i < shapes.size(); i++){
+		for (int v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+			w2pX(shapes, i, 3*v+0, left, right, bottom, top);
+			w2pY(shapes, i, 3*v+1, left, right, bottom, top);
+		}
+	}	
+
+//      store Z
+
+//      compute Bbox in px space
+// ******** TODO insert Bbox struct ********
+
+//      pull content from L02
 }
 
 
@@ -94,13 +151,12 @@ int main(int argc, char **argv)
 	string meshName(argv[1]);
 	string imgName(argv[2]);
 
-	int width = atoi(argv[3]);
-	int height = atoi(argv[4]);
+	//set g_width and g_height appropriately!
+//      g_width = g_height = 100;    *** if using this, change 'g_width = atoi...' and 'g_height = ...'
+	g_width = atoi(argv[3]);
+	g_height = atoi(argv[4]);
 	
 	int c_mode = atoi(argv[5]);
-	
-	//set g_width and g_height appropriately!
-	g_width = g_height = 100;
 
         //create an image
 	auto image = make_shared<Image>(g_width, g_height);
@@ -132,7 +188,12 @@ int main(int argc, char **argv)
  	//keep this code to resize your object to be within -1 -> 1
 	resize_obj(shapes); 
 
-	//TODO add code to iterate through each triangle and rasterize it 
+	// ******** TODO add code to iterate through each triangle and rasterize it ********
+	rasterize(shapes);
+
+
+
+
 	
 	//write out the image
         image->writeToFile(imgName);
