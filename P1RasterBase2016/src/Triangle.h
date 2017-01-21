@@ -14,13 +14,17 @@ public:
 	int getMinY(int v1y, int v2y, int v3y);
 	int getMaxY(int v1y, int v2y, int v3y);
 
-private:
+
 	int v1x;
 	int v1y;
 	int v2x;
 	int v2y;
 	int v3x;
 	int v3y;
+	int minX;
+	int maxX;
+	int minY;
+	int maxY;
 };
 
 #endif

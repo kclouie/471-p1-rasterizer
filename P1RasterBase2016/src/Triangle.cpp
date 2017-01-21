@@ -11,14 +11,18 @@ Triangle::Triangle(int v1x, int v1y, int v2x, int v2y, int v3x, int v3y) {
 	v2y = v2y;
 	v3x = v3y;
 	v3y = v3y;
+	minX = 0;
+	maxX = 0;
+	minY = 0;
+	maxY = 0;
 }
 
 int Triangle::getMinX(int v1x, int v2x, int v3x) {
 	int min = 0;
-	if (v1x < v2x && v1x < v3x) {
+	if (v1x <= v2x && v1x <= v3x) {
 		min = v1x;
 	}
-	else if (v2x < v1x && v2x < v3x) {
+	else if (v2x <= v1x && v2x <= v3x) {
 		min = v2x;
 	}	
 	else {
@@ -29,10 +33,10 @@ int Triangle::getMinX(int v1x, int v2x, int v3x) {
 
 int Triangle::getMaxX(int v1x, int v2x, int v3x) {
 	int max = 0;
-	if (v1x > v2x && v1x > v3x) {
+	if (v1x >= v2x && v1x >= v3x) {
 		max = v1x;
 	}
-	else if (v2x > v1x && v2x > v3x) {
+	else if (v2x >= v1x && v2x >= v3x) {
 		max = v2x;
 	}
 	else {
@@ -43,10 +47,10 @@ int Triangle::getMaxX(int v1x, int v2x, int v3x) {
 
 int Triangle::getMinY(int v1y, int v2y, int v3y) {
 	int min = 0;
-	if (v1y < v2y && v1y < v3y) {
+	if (v1y <= v2y && v1y <= v3y) {
 		min = v1y;
 	}
-	else if (v2y < v1y && v2y < v3y) {
+	else if (v2y <= v1y && v2y <= v3y) {
 		min = v2y; 
 	}
 	else {
@@ -57,10 +61,10 @@ int Triangle::getMinY(int v1y, int v2y, int v3y) {
 
 int Triangle::getMaxY(int v1y, int v2y, int v3y) {
 	int max = 0;
-	if (v1y > v2y && v1y > v3y) {
+	if (v1y >= v2y && v1y >= v3y) {
 		max = v1y;
 	}
-	else if (v2y > v1y && v2y > v3y) {
+	else if (v2y >= v1y && v2y >= v3y) {
 		max = v2y;
 	}
 	else {
