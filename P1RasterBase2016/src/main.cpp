@@ -224,42 +224,40 @@ int main(int argc, char **argv)
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
+	float alpha, beta, gamma;
 	Bcoords *bcoords = new Bcoords();
 
 
-	int tricount = 0;
-	int count = 0, DELETEME = 1;
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
 			Triangle t = getTriangle(shapes, i, v);
-			tricount++;
-			
+
 			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
+			cout << "v1x = " << t.v1x << " v2x = " << t.v2x << " t.v3x = " << t.v3x << endl;
+			cout << "v1y = " << t.v1y << " v2y = " << t.v2y << " t.v3y = " << t.v3y << endl;
+			cout << "minX = " << t.minX << " maxX = " << t.maxX << " minY = " << t.minY << " maxY = " << t.maxY << endl;
+		
 			for (int y = t.minY; y <= t.maxY; ++y){
 				for (int x = t.minX; x <= t.maxX; ++x){
-//					int res = getabg(triarea, t, x, y, bcoords);
-					bcoords->beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
-        				bcoords->gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
-        				bcoords->alpha = 1 - bcoords->beta - bcoords->gamma;
-	
-//					if (res == 1) {
-					if ((bcoords->alpha >= 0 && bcoords->alpha <= 1) && (bcoords->beta >= 0 && bcoords->beta <= 1) && (bcoords->gamma >= 0 && bcoords->gamma <= 1)){
-						r = 255; //(bcoords->alpha*148) + (bcoords->beta*148) + (bcoords->gamma*148);
-                                		g = 255; //(bcoords->alpha*215) + (bcoords->beta*215) + (bcoords->gamma*215);
-                                		b = 255; //(bcoords->alpha*219) + (bcoords->beta*219) + (bcoords->gamma*219);
+					beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
+        				gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
+        				alpha = 1 - beta - gamma;
+					if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)){
+//						r = 255; //(alpha*148) + (beta*148) + (gamma*148);
+//                                		g = 255; //(alpha*215) + (beta*215) + (gamma*215);
+//                                		b = 255; //(alpha*219) + (beta*219) + (gamma*219);
+						image->setPixel(x,y,148,215,219);
 					}	
-					else {
-						r = 0;
-						g = 0;
-						b = 0;
-					}
-					image->setPixel(x,y,r,g,b);					
+//					else {
+//						r = 0;
+//						g = 0;
+//						b = 0;
+//					}
+//					image->setPixel(x,y,r,g,b);					
 				}
 			}
 		}
 	}
-	cout << "triCount = " << tricount << endl;
-	cout << "colored count = " << count << endl;
 
 	//write out the image
         image->writeToFile(imgName);
