@@ -110,14 +110,10 @@ int w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, fl
 	return val;
 }
 
-void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff, Bbox *bounds){
+void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff){
 	// Variables
 	float left, right, bottom, top;
 	int tempX, tempY;
-	bounds->minX = 2147483647;
-	bounds->maxX = -2147483647;
-	bounds->minY = 2147483647;
-	bounds->maxY = -2147483647;
 	if (g_width > g_height){
 		left = -(g_width/g_height);
 		right = (g_width/g_height);
@@ -127,18 +123,14 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff, 
 	else {
 		left = -1;
 		right = 1;
-		bottom = -(g_height/g_width);
-		top = (g_height/g_width);
+		bottom = -((g_height/2)/g_width);
+		top = ((g_height/2)/g_width);
 	}
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
 			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top);
 			tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
 			zbuff.push_back(shapes[i].mesh.positions[3*v+2]);
-			if (tempX < bounds->minX) bounds->minX = tempX;
-			if (tempX > bounds->maxX) bounds->maxX = tempX;
-			if (tempY < bounds->minY) bounds->minY = tempY;
-			if (tempY > bounds->maxY) bounds->maxY = tempY;
 		}
 	}
 }
@@ -173,6 +165,8 @@ int getabg(float triarea, Triangle t, int x, int y, Bcoords *bcoords){
 	bcoords->beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
         bcoords->gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         bcoords->alpha = 1 - bcoords->beta - bcoords->gamma;
+
+//	cout << "alpha = " << bcoords->alpha << " beta = " << bcoords->beta << " gamma = " << bcoords->gamma << endl;
 
 	if ((bcoords->alpha >= 0 && bcoords->alpha <= 1) && (bcoords->beta >= 0 && bcoords->beta <= 1) && (bcoords->gamma >= 0 && bcoords->gamma <= 1)){
 		return 1;
@@ -226,42 +220,46 @@ int main(int argc, char **argv)
 
 	// ******** TODO add code to iterate through each triangle and rasterize it ********
 	vector<float> zbuff;
-	Bbox *bounds = new Bbox();
-	convertcoords(shapes, zbuff, bounds);
+	convertcoords(shapes, zbuff);
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
 	Bcoords *bcoords = new Bcoords();
 
 
-
+	int tricount = 0;
+	int count = 0, DELETEME = 1;
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
 			Triangle t = getTriangle(shapes, i, v);
-//			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
+			tricount++;
+			
+			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
 			for (int y = t.minY; y <= t.maxY; ++y){
 				for (int x = t.minX; x <= t.maxX; ++x){
 //					int res = getabg(triarea, t, x, y, bcoords);
-
-
+					bcoords->beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
+        				bcoords->gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
+        				bcoords->alpha = 1 - bcoords->beta - bcoords->gamma;
+	
 //					if (res == 1) {
-//						r = (bcoords->alpha*148) + (bcoords->beta*148) + (bcoords->gamma*148);
-//                                		g = (bcoords->alpha*215) + (bcoords->beta*215) + (bcoords->gamma*215);
-//                                		b = (bcoords->alpha*219) + (bcoords->beta*219) + (bcoords->gamma*219);
-//					}	
-//					else {
-//						r = 0;
-//						g = 0;
-//						b = 0;
-//					}
-					r = 255;
-                        		g = 0;
-                        		b = 0;
+					if ((bcoords->alpha >= 0 && bcoords->alpha <= 1) && (bcoords->beta >= 0 && bcoords->beta <= 1) && (bcoords->gamma >= 0 && bcoords->gamma <= 1)){
+						r = 255; //(bcoords->alpha*148) + (bcoords->beta*148) + (bcoords->gamma*148);
+                                		g = 255; //(bcoords->alpha*215) + (bcoords->beta*215) + (bcoords->gamma*215);
+                                		b = 255; //(bcoords->alpha*219) + (bcoords->beta*219) + (bcoords->gamma*219);
+					}	
+					else {
+						r = 0;
+						g = 0;
+						b = 0;
+					}
 					image->setPixel(x,y,r,g,b);					
 				}
 			}
 		}
 	}
+	cout << "triCount = " << tricount << endl;
+	cout << "colored count = " << count << endl;
 
 	//write out the image
         image->writeToFile(imgName);
