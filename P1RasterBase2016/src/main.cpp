@@ -111,12 +111,10 @@ int w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, fl
 	return val;
 }
 
-float getratio(std::vector<tinyobj::shape_t> &shapes){
-	float pxr, wr, xscale, yscale, scale;
+void getratio(std::vector<tinyobj::shape_t> &shapes){
+	float pxr, wr; //, xscale, yscale, scale;
 	int w_width, w_height, tempw, temph;
 	int minX = 2147483647, maxX = -2147483647, minY = 2147483647, maxY = -2147483647;
-
-// find width/height in world coords
         for (size_t i = 0; i < shapes.size(); i++){
                 for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
                         if ((minX > shapes[i].mesh.positions[3*v+0])) minX = shapes[i].mesh.positions[3*v+0];
@@ -127,19 +125,8 @@ float getratio(std::vector<tinyobj::shape_t> &shapes){
         }
 	w_width = (maxX-minX) + 1;
 	w_height = (maxY - minY) + 1;
-
 	wr = w_width / w_height;
 	pxr = g_width / g_height;
-
-//	if (pxr > wr){
-//		tempw = w_width * g_height / w_height;
-//		temph = g_height;
-//	}
-//	else {
-//		tempw = g_width;
-//		temph = w_height * g_width / w_width;
-//	}
-
 	if (pxr > wr){
 		tempw = g_width;
 		temph = w_height * g_width / w_width;
@@ -148,29 +135,16 @@ float getratio(std::vector<tinyobj::shape_t> &shapes){
 		tempw = w_width * g_height / w_height;
 		temph = g_height;
         }
-
-cout << "new width = " << tempw << endl;
-cout << "new height = " << temph << endl;	
-
 	g_width = tempw;
 	g_height = temph;
-
-
-	xscale = g_width / tempw;
-	yscale = g_height / temph;
-	scale = (xscale < yscale) ? xscale : yscale;
-	return scale;
 }
 
 void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
 	// Variables
 	float left, right, bottom, top, scale;
-	int tempX, tempY;
+	int tempX, tempY, minX = 2147483647, maxX = -2147483647, minY = 2147483647, maxY = -2147483647;
 
-// change g_width/height
-scale = getratio(shapes);
-
-cout << "scale = " << scale << endl;
+	getratio(shapes);
 	
 	if (g_width > g_height){
 		left = -(g_width/g_height);
@@ -189,10 +163,17 @@ cout << "scale = " << scale << endl;
 		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
 			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top);
 			tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
+	
+		if (tempX < minX) minX = tempX;
+		if (tempX > maxX) maxX = tempX;
+		if (tempY < minY) minY = tempY;
+		if (tempY > maxY) maxY = tempY;
 			zbuff.push_back(shapes[i].mesh.positions[3*v+2]);
 //			zbuff[3*v+0][3*v+1] = shapes[i].mesh.positions[3*v+2];
 		}
 	}
+
+cout << "minX = " << minX << " maxX = " << maxX << " minY = " << minY << " maxY = " << maxY << endl;
 }
 
 Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
@@ -316,17 +297,17 @@ int main(int argc, char **argv)
                                         gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         				alpha = 1 - beta - gamma;
 					if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)){
-						r = (alpha*148) + (beta*148) + (gamma*148);
-                                		g = (alpha*215) + (beta*215) + (gamma*215);
-                                		b = (alpha*219) + (beta*219) + (gamma*219);
-// **						image->setPixel(x,y,148,215,219);
+//						r = (alpha*148) + (beta*148) + (gamma*148);
+//                                 		g = (alpha*215) + (beta*215) + (gamma*215);
+//                                		b = (alpha*219) + (beta*219) + (gamma*219);
+						image->setPixel(x,y,148,215,219);
 					}	
-					else {
-						r = 0;
-						g = 0;
-						b = 0;
-					}
-					image->setPixel(x,y,r,g,b);					
+//					else {
+//						r = 0;
+//						g = 0;
+//						b = 0;
+//					}
+//					image->setPixel(x,y,r,g,b);					
 				}
 			}
 		}
