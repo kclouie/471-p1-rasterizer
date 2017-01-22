@@ -99,6 +99,7 @@ int w2pX(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, fl
 	int val = scale*shapes[i].mesh.positions[coord]+shift;
 	shapes[i].mesh.positions[coord] = val;
 	return val;
+	
 }
 
 int w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top){
@@ -114,6 +115,37 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff){
 	// Variables
 	float left, right, bottom, top;
 	int tempX, tempY;
+	int minX = 2147483647, maxX = -2147483647, minY = 2147483647, maxY = -2147483647;
+
+//	for (size_t i = 0; i < shapes.size(); i++){
+//		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+//			if ((minX < shapes[i].mesh.positions[3*v+0]) == 0) minX = shapes[i].mesh.positions[3*v+0];
+//			if ((maxX > shapes[i].mesh.positions[3*v+0]) == 0) maxX = shapes[i].mesh.positions[3*v+0];
+//			if ((minY < shapes[i].mesh.positions[3*v+1]) == 0) {minY = shapes[i].mesh.positions[3*v+1];
+//				cout << "minY = " << shapes[i].mesh.positions[3*v+1] << endl;}	
+//			if ((maxY > shapes[i].mesh.positions[3*v+1]) == 0) {maxY = shapes[i].mesh.positions[3*v+1];
+//				cout << "maxY = " << shapes[i].mesh.positions[3*v+1] << endl;}
+//		}
+//	} 
+
+//	cout << "maxY = " << maxY << " minY = " << minY << endl;
+//	int pxwidth = (maxX - minX);
+//	int pxheight = (maxY - minY);
+//	g_height = pxheight * g_width / pxwidth;
+	
+//	cout << " WEEE "<< endl;
+
+//	float xscale = g_width / pxwidth;
+
+//	cout << " WEEE "<< endl;
+		
+//	float yscale = g_height / pxheight;
+
+//	cout << " WEEE "<< endl;
+
+//	cout << "px_width = " << pxwidth << " px_height = " << pxheight << endl;	
+//	cout << "g_width = " << g_width << " g_height = " << g_height << endl;
+	
 	if (g_width > g_height){
 		left = -(g_width/g_height);
 		right = (g_width/g_height);
@@ -126,6 +158,7 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff){
 		bottom = -((g_height/2)/g_width);
 		top = ((g_height/2)/g_width);
 	}
+
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
 			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top);
@@ -186,9 +219,11 @@ int main(int argc, char **argv)
 	string meshName(argv[1]);
 	string imgName(argv[2]);
 	//set g_width and g_height appropriately!
-//      g_width = g_height = 100;    *** if using this, change 'g_width = atoi...' and 'g_height = ...'
+//        g_width = g_height = 100;    
 	g_width = atoi(argv[3]);
 	g_height = atoi(argv[4]);
+
+
 	int c_mode = atoi(argv[5]);
         //create an image
 	auto image = make_shared<Image>(g_width, g_height);
@@ -206,13 +241,13 @@ int main(int argc, char **argv)
 	if(!rc) {
 		cerr << errStr << endl;
 	} else {
+		//keep this code to resize your object to be within -1 -> 1
 		resize_obj(shapes);
 		posBuf = shapes[0].mesh.positions;
 		triBuf = shapes[0].mesh.indices;
 	}
 	cout << "Number of vertices: " << posBuf.size()/3 << endl;
 	cout << "Number of triangles: " << triBuf.size()/3 << endl;
- 	//keep this code to resize your object to be within -1 -> 1
 
 
 //	resize_obj(shapes); 
@@ -233,9 +268,9 @@ int main(int argc, char **argv)
 			Triangle t = getTriangle(shapes, i, v);
 
 			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
-			cout << "v1x = " << t.v1x << " v2x = " << t.v2x << " t.v3x = " << t.v3x << endl;
-			cout << "v1y = " << t.v1y << " v2y = " << t.v2y << " t.v3y = " << t.v3y << endl;
-			cout << "minX = " << t.minX << " maxX = " << t.maxX << " minY = " << t.minY << " maxY = " << t.maxY << endl;
+//			cout << "v1x = " << t.v1x << " v2x = " << t.v2x << " t.v3x = " << t.v3x << endl;
+//			cout << "v1y = " << t.v1y << " v2y = " << t.v2y << " t.v3y = " << t.v3y << endl;
+//			cout << "minX = " << t.minX << " maxX = " << t.maxX << " minY = " << t.minY << " maxY = " << t.maxY << endl;
 		
 			for (int y = t.minY; y <= t.maxY; ++y){
 				for (int x = t.minX; x <= t.maxX; ++x){
