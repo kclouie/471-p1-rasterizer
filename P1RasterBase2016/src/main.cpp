@@ -111,10 +111,66 @@ int w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, fl
 	return val;
 }
 
+float getratio(std::vector<tinyobj::shape_t> &shapes){
+	float pxr, wr, xscale, yscale, scale;
+	int w_width, w_height, tempw, temph;
+	int minX = 2147483647, maxX = -2147483647, minY = 2147483647, maxY = -2147483647;
+
+// find width/height in world coords
+        for (size_t i = 0; i < shapes.size(); i++){
+                for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+                        if ((minX > shapes[i].mesh.positions[3*v+0])) minX = shapes[i].mesh.positions[3*v+0];
+                        if ((maxX < shapes[i].mesh.positions[3*v+0])) maxX = shapes[i].mesh.positions[3*v+0];
+                        if ((minY > shapes[i].mesh.positions[3*v+1])) minY = shapes[i].mesh.positions[3*v+1];
+                        if ((maxY < shapes[i].mesh.positions[3*v+1])) maxY = shapes[i].mesh.positions[3*v+1];
+                }
+        }
+	w_width = (maxX-minX) + 1;
+	w_height = (maxY - minY) + 1;
+
+	wr = w_width / w_height;
+	pxr = g_width / g_height;
+
+//	if (pxr > wr){
+//		tempw = w_width * g_height / w_height;
+//		temph = g_height;
+//	}
+//	else {
+//		tempw = g_width;
+//		temph = w_height * g_width / w_width;
+//	}
+
+	if (pxr > wr){
+		tempw = g_width;
+		temph = w_height * g_width / w_width;
+        }
+        else {
+		tempw = w_width * g_height / w_height;
+		temph = g_height;
+        }
+
+cout << "new width = " << tempw << endl;
+cout << "new height = " << temph << endl;	
+
+	g_width = tempw;
+	g_height = temph;
+
+
+	xscale = g_width / tempw;
+	yscale = g_height / temph;
+	scale = (xscale < yscale) ? xscale : yscale;
+	return scale;
+}
+
 void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
 	// Variables
-	float left, right, bottom, top;
+	float left, right, bottom, top, scale;
 	int tempX, tempY;
+
+// change g_width/height
+scale = getratio(shapes);
+
+cout << "scale = " << scale << endl;
 	
 	if (g_width > g_height){
 		left = -(g_width/g_height);
@@ -125,8 +181,8 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
 	else {
 		left = -1;
 		right = 1;
-		bottom = -((g_height/2)/g_width);
-		top = ((g_height/2)/g_width);
+		bottom = -((g_height)/g_width);
+		top = ((g_height)/g_width);
 	}
 
 	for (size_t i = 0; i < shapes.size(); i++){
@@ -209,9 +265,8 @@ int main(int argc, char **argv)
 	string imgName(argv[2]);
 	//set g_width and g_height appropriately!
 //        g_width = g_height = 100;    
-	g_width = atoi(argv[3]);
-	g_height = atoi(argv[4]);
-
+	g_width = atoi(argv[3]);	// in px
+	g_height = atoi(argv[4]);	// in px
 
 	int c_mode = atoi(argv[5]);
         //create an image
