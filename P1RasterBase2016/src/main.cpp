@@ -111,40 +111,10 @@ int w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, fl
 	return val;
 }
 
-void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff){
+void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
 	// Variables
 	float left, right, bottom, top;
 	int tempX, tempY;
-	int minX = 2147483647, maxX = -2147483647, minY = 2147483647, maxY = -2147483647;
-
-//	for (size_t i = 0; i < shapes.size(); i++){
-//		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
-//			if ((minX < shapes[i].mesh.positions[3*v+0]) == 0) minX = shapes[i].mesh.positions[3*v+0];
-//			if ((maxX > shapes[i].mesh.positions[3*v+0]) == 0) maxX = shapes[i].mesh.positions[3*v+0];
-//			if ((minY < shapes[i].mesh.positions[3*v+1]) == 0) {minY = shapes[i].mesh.positions[3*v+1];
-//				cout << "minY = " << shapes[i].mesh.positions[3*v+1] << endl;}	
-//			if ((maxY > shapes[i].mesh.positions[3*v+1]) == 0) {maxY = shapes[i].mesh.positions[3*v+1];
-//				cout << "maxY = " << shapes[i].mesh.positions[3*v+1] << endl;}
-//		}
-//	} 
-
-//	cout << "maxY = " << maxY << " minY = " << minY << endl;
-//	int pxwidth = (maxX - minX);
-//	int pxheight = (maxY - minY);
-//	g_height = pxheight * g_width / pxwidth;
-	
-//	cout << " WEEE "<< endl;
-
-//	float xscale = g_width / pxwidth;
-
-//	cout << " WEEE "<< endl;
-		
-//	float yscale = g_height / pxheight;
-
-//	cout << " WEEE "<< endl;
-
-//	cout << "px_width = " << pxwidth << " px_height = " << pxheight << endl;	
-//	cout << "g_width = " << g_width << " g_height = " << g_height << endl;
 	
 	if (g_width > g_height){
 		left = -(g_width/g_height);
@@ -164,6 +134,7 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff){
 			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top);
 			tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
 			zbuff.push_back(shapes[i].mesh.positions[3*v+2]);
+//			zbuff[3*v+0][3*v+1] = shapes[i].mesh.positions[3*v+2];
 		}
 	}
 }
@@ -192,6 +163,24 @@ Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
 //	cout << "f " << v1+1 << " " << v2+1 << " " << v3+1 << endl;
 
 	return t;
+}
+
+int getMin(int v1, int v2, int v3) {
+        int min = v1;
+        int arr[3] = {v1, v2, v3};
+        for (int i = 0; i < 3; i++){
+                if (arr[i] < min) min = arr[i];
+        }
+        return min;
+}
+
+int getMax(int v1, int v2, int v3) {
+        int max = v1;
+        int arr[3] = {v1, v2, v3};
+        for (int i = 0; i < 3; i++){
+                if (arr[i] > max) max = arr[i];
+        }
+        return max;
 } 
 
 int getabg(float triarea, Triangle t, int x, int y, Bcoords *bcoords){
@@ -249,12 +238,11 @@ int main(int argc, char **argv)
 	cout << "Number of vertices: " << posBuf.size()/3 << endl;
 	cout << "Number of triangles: " << triBuf.size()/3 << endl;
 
-
 //	resize_obj(shapes); 
-
 
 	// ******** TODO add code to iterate through each triangle and rasterize it ********
 	vector<float> zbuff;
+//	float zbuff[g_width][g_height];
 	convertcoords(shapes, zbuff);
 	unsigned char r;
 	unsigned char g;
@@ -266,29 +254,24 @@ int main(int argc, char **argv)
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
 			Triangle t = getTriangle(shapes, i, v);
-
 			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
-//			cout << "v1x = " << t.v1x << " v2x = " << t.v2x << " t.v3x = " << t.v3x << endl;
-//			cout << "v1y = " << t.v1y << " v2y = " << t.v2y << " t.v3y = " << t.v3y << endl;
-//			cout << "minX = " << t.minX << " maxX = " << t.maxX << " minY = " << t.minY << " maxY = " << t.maxY << endl;
-		
-			for (int y = t.minY; y <= t.maxY; ++y){
-				for (int x = t.minX; x <= t.maxX; ++x){
-					beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
-        				gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
+                        for (int y = t.minY; y <= t.maxY; ++y){
+                                for (int x = t.minX; x <= t.maxX; ++x){
+                                        beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
+                                        gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         				alpha = 1 - beta - gamma;
 					if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)){
-//						r = 255; //(alpha*148) + (beta*148) + (gamma*148);
-//                                		g = 255; //(alpha*215) + (beta*215) + (gamma*215);
-//                                		b = 255; //(alpha*219) + (beta*219) + (gamma*219);
-						image->setPixel(x,y,148,215,219);
+						r = (alpha*148) + (beta*148) + (gamma*148);
+                                		g = (alpha*215) + (beta*215) + (gamma*215);
+                                		b = (alpha*219) + (beta*219) + (gamma*219);
+// **						image->setPixel(x,y,148,215,219);
 					}	
-//					else {
-//						r = 0;
-//						g = 0;
-//						b = 0;
-//					}
-//					image->setPixel(x,y,r,g,b);					
+					else {
+						r = 0;
+						g = 0;
+						b = 0;
+					}
+					image->setPixel(x,y,r,g,b);					
 				}
 			}
 		}
