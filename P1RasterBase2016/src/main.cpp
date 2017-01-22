@@ -92,12 +92,12 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
    }
 }
 
-int w2pX(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top){
+int w2pX(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top, int old_width){
 	float scale, shift;
 	scale = (g_width - 1)/(right - left);
 	shift = (-left)*((g_width-1)/(right-left));
 	int val = scale*shapes[i].mesh.positions[coord]+shift;
-	shapes[i].mesh.positions[coord] = val;
+	shapes[i].mesh.positions[coord] = val - (g_width - old_width)/2;
 	return val;
 	
 }
@@ -127,25 +127,25 @@ void getratio(std::vector<tinyobj::shape_t> &shapes){
 	w_height = (maxY - minY) + 1;
 	wr = w_width / w_height;
 	pxr = g_width / g_height;
-//	if (pxr > wr){
-//		tempw = g_width;
-//		temph = w_height * g_width / w_width;
-  //      }
-    //    else {
-//		tempw = w_width * g_height / w_height;
-//		temph = g_height;
-  //      }
-
 	if (pxr > wr){
-		tempw = w_width * g_height / w_height;
-		temph = g_height;
-        }
-        else {
 		tempw = g_width;
 		temph = w_height * g_width / w_width;
         }
-	g_width = tempw;
-	g_height = temph;
+        else {
+		tempw = w_width * g_height / w_height;
+		temph = g_height;
+        }
+
+//	if (pxr > wr){
+ //		tempw = w_width * g_height / w_height;
+ //		temph = g_height;
+   //      }
+//         else {
+//		tempw = g_width;
+ //		temph = w_height * g_width / w_width;
+ //       }
+ 	g_width = tempw;
+ 	g_height = temph;
 }
 
 void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
@@ -174,7 +174,7 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
 		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
 //			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top);
 //			tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
-			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top) - rlshift;
+			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top, old_width);
                         tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
 
 			if (tempX < minX) minX = tempX;
@@ -186,7 +186,8 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> zbuff){
 		}
 	}
 
-cout << "minX = " << minX << " maxX = " << maxX << " minY = " << minY << " maxY = " << maxY << endl;
+//cout << "minX = " << minX << " maxX = " << maxX << " minY = " << minY << " maxY = " << maxY << endl;
+cout << "px_width = " << maxX-minX << " px_height = " << maxY-minY << endl;
 cout << "g_width = " << g_width << " g_height = " << g_height << endl;
 }
 
