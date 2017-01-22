@@ -21,6 +21,10 @@ typedef struct {
 	int minX, maxX, minY, maxY;
 } Bbox;
 
+typedef struct {
+	float alpha, beta, gamma;
+} Bcoords;
+
 /*
    Helper function you will want all quarter
    Given a vector of shapes which has already been read from an obj file
@@ -89,24 +93,20 @@ void resize_obj(std::vector<tinyobj::shape_t> &shapes){
 }
 
 int w2pX(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top){
-//	cout << "wX = " << shapes[i].mesh.positions[coord] << endl;
 	float scale, shift;
 	scale = (g_width - 1)/(right - left);
 	shift = (-left)*((g_width-1)/(right-left));
 	int val = scale*shapes[i].mesh.positions[coord]+shift;
 	shapes[i].mesh.positions[coord] = val;
-	cout << "pX = " << shapes[i].mesh.positions[coord] << endl;
 	return val;
 }
 
 int w2pY(std::vector<tinyobj::shape_t> &shapes, int i, int coord, float left, float right, float bottom, float top){
-//	cout << "wY = " << shapes[i].mesh.positions[coord] << endl;
 	float scale, shift;
 	scale = (g_height - 1)/(top - bottom);
 	shift = (-bottom)*((g_height - 1)/(top - bottom));
 	int val = scale*shapes[i].mesh.positions[coord]+shift;
 	shapes[i].mesh.positions[coord] = val;
-        cout << "pY = " << shapes[i].mesh.positions[coord] << endl;
 	return val;
 }
 
@@ -118,7 +118,6 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff, 
 	bounds->maxX = -2147483647;
 	bounds->minY = 2147483647;
 	bounds->maxY = -2147483647;
-//      compute R,L,T,B
 	if (g_width > g_height){
 		left = -(g_width/g_height);
 		right = (g_width/g_height);
@@ -131,53 +130,57 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, vector<float> &zbuff, 
 		bottom = -(g_height/g_width);
 		top = (g_height/g_width);
 	}
-
-//      <-- zbuff here!!!
-//      for each vertex (xyz), use R,L,T,B to find mapped X and Y for each
-	for (int i = 0; i < shapes.size(); i++){
-		for (int v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+	for (size_t i = 0; i < shapes.size(); i++){
+		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
 			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top);
 			tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
-			zbuff.push_back(shapes[i].mesh.positions[3*v+3]);
+			zbuff.push_back(shapes[i].mesh.positions[3*v+2]);
 			if (tempX < bounds->minX) bounds->minX = tempX;
 			if (tempX > bounds->maxX) bounds->maxX = tempX;
 			if (tempY < bounds->minY) bounds->minY = tempY;
 			if (tempY > bounds->maxY) bounds->maxY = tempY;
 		}
 	}
-	cout << "zbuff size = " << zbuff.size() << endl;
-	cout << "minX = " << bounds->minX << " maxX = " << bounds->maxX << " minY = " << bounds->minY << " maxY = " << bounds->maxY << endl;	
 }
 
 Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
+//	cout << "v = " << v << endl;
+
+	Triangle t(0,0,0,0,0,0);
 	int v1 = shapes[i].mesh.indices[3*v+0];
-//	cout << "v1index = " << shapes[i].mesh.indices[3*v+0] << endl;
-	int v1x = shapes[i].mesh.positions[v1*3];
-//	cout << "v1x = " << v1x << endl;
-	int v1y = shapes[i].mesh.positions[(v1*3)+1];
-	cout << "v1y = " << v1y << endl;
+	t.v1x = shapes[i].mesh.positions[v1*3];
+	t.v1y = shapes[i].mesh.positions[(v1*3)+1];
 
 	int v2 = shapes[i].mesh.indices[3*v+1];
-//	cout << "v2index = " << shapes[i].mesh.indices[3*v+1] << endl;
-	int v2x = shapes[i].mesh.positions[v2*3];
-//      cout << "v2x = " << v2x << endl;
-        int v2y = shapes[i].mesh.positions[(v2*3)+1];
-        cout << "v2y = " << v2y << endl;
+	t.v2x = shapes[i].mesh.positions[v2*3];
+        t.v2y = shapes[i].mesh.positions[(v2*3)+1];
 
 	int v3 = shapes[i].mesh.indices[3*v+2];
-//	cout << "v3index = " << shapes[i].mesh.indices[3*v+2] << endl;
-	int v3x = shapes[i].mesh.positions[v3*3];
-//      cout << "v3x = " << v3x << endl;
-        int v3y = shapes[i].mesh.positions[(v3*3)+1];
-        cout << "v3y = " << v3y << endl;
+	t.v3x = shapes[i].mesh.positions[v3*3];
+        t.v3y = shapes[i].mesh.positions[(v3*3)+1];
 
-	Triangle t(v1x, v1y, v2x, v2y, v3x, v3y);
-	t.minX = t.getMinX(v1x, v2x, v3x);
-	t.maxX = t.getMaxX(v1x, v2x, v3x);
-	t.minY = t.getMinY(v1y, v2y, v3y);
-	t.maxY = t.getMaxY(v1y, v2y, v3y);
+	t.minX = t.getMin(t.v1x, t.v2x, t.v3x);
+	t.maxX = t.getMax(t.v1x, t.v2x, t.v3x);
+	t.minY = t.getMin(t.v1y, t.v2y, t.v3y);
+	t.maxY = t.getMax(t.v1y, t.v2y, t.v3y);
+
+//	cout << "f " << v1+1 << " " << v2+1 << " " << v3+1 << endl;
+
 	return t;
 } 
+
+int getabg(float triarea, Triangle t, int x, int y, Bcoords *bcoords){
+	bcoords->beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
+        bcoords->gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
+        bcoords->alpha = 1 - bcoords->beta - bcoords->gamma;
+
+	if ((bcoords->alpha >= 0 && bcoords->alpha <= 1) && (bcoords->beta >= 0 && bcoords->beta <= 1) && (bcoords->gamma >= 0 && bcoords->gamma <= 1)){
+		return 1;
+	}
+	else {
+		return 0;
+	}
+}
 
 int main(int argc, char **argv)
 {
@@ -185,35 +188,26 @@ int main(int argc, char **argv)
 		cout << "Usage: Assignment1 inputfile meshfile width height colormode" << endl;
     		return 0;
    	}
-
 	// OBJ filename
 	string meshName(argv[1]);
 	string imgName(argv[2]);
-
 	//set g_width and g_height appropriately!
 //      g_width = g_height = 100;    *** if using this, change 'g_width = atoi...' and 'g_height = ...'
 	g_width = atoi(argv[3]);
 	g_height = atoi(argv[4]);
-	
 	int c_mode = atoi(argv[5]);
-
         //create an image
 	auto image = make_shared<Image>(g_width, g_height);
-
 	// triangle buffer
 	vector<unsigned int> triBuf;
-
 	// position buffer
 	vector<float> posBuf;
-
 	// Some obj files contain material information.
 	// We'll ignore them for this assignment.
 	vector<tinyobj::shape_t> shapes; // geometry
 	vector<tinyobj::material_t> objMaterials; // material
 	string errStr;
-	
         bool rc = tinyobj::LoadObj(shapes, objMaterials, errStr, meshName.c_str());
-
 	/* error checking on read */
 	if(!rc) {
 		cerr << errStr << endl;
@@ -224,68 +218,54 @@ int main(int argc, char **argv)
 	}
 	cout << "Number of vertices: " << posBuf.size()/3 << endl;
 	cout << "Number of triangles: " << triBuf.size()/3 << endl;
-
  	//keep this code to resize your object to be within -1 -> 1
+
+
 //	resize_obj(shapes); 
+
 
 	// ******** TODO add code to iterate through each triangle and rasterize it ********
 	vector<float> zbuff;
 	Bbox *bounds = new Bbox();
-
 	convertcoords(shapes, zbuff, bounds);
-	
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
+	Bcoords *bcoords = new Bcoords();
 
-	for (int i = 0; i < shapes.size(); i++){
-		for (int v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
+
+
+	for (size_t i = 0; i < shapes.size(); i++){
+		for (size_t v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
 			Triangle t = getTriangle(shapes, i, v);
-			cout << "t.minX = " << t.minX << endl;
-			cout << "t.maxX = " << t.maxX << endl;
-			cout << "t.minY = " << t.minY << endl;
-			cout << "t.maxY = " << t.maxY << endl;
+//			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
 			for (int y = t.minY; y <= t.maxY; ++y){
 				for (int x = t.minX; x <= t.maxX; ++x){
-					r = 148;
-					g = 215;
-					b = 219;
+//					int res = getabg(triarea, t, x, y, bcoords);
+
+
+//					if (res == 1) {
+//						r = (bcoords->alpha*148) + (bcoords->beta*148) + (bcoords->gamma*148);
+//                                		g = (bcoords->alpha*215) + (bcoords->beta*215) + (bcoords->gamma*215);
+//                                		b = (bcoords->alpha*219) + (bcoords->beta*219) + (bcoords->gamma*219);
+//					}	
+//					else {
+//						r = 0;
+//						g = 0;
+//						b = 0;
+//					}
+					r = 255;
+                        		g = 0;
+                        		b = 0;
 					image->setPixel(x,y,r,g,b);					
 				}
 			}
 		}
 	}
-	
-//	for (int i = 0; i < shapes.size(); i++){
-//		for (int v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
-//			int v1index = shapes[i].mesh.indices[3*v+0];
-//				int v1x = shapes[i].mesh.positions[((v1index-1)*3)+0];
-//				int v1y = shapes[i].mesh.positions[((v1index-1)*3)+1];
-//			int v2index = shapes[i].mesh.indices[3*v+1];
-//                            int v2x = shapes[i].mesh.positions[((v2index-1)*3)+0];
-//                              int v2y = shapes[i].mesh.positions[((v2index-1)*3)+1];
-//			int v3index = shapes[i].mesh.indices[3*v+2];
-//                            int v3x = shapes[i].mesh.positions[((v3index-1)*3)+0];
-//                              int v3y = shapes[i].mesh.positions[((v3index-1)*3)+1];
-//			Triangle vertices(v1x, v1y, v2x, v2y, v3x, v3y);
-//			int min_x = vertices.getMinX(v1x, v2x, v3x);
-//			int max_x = vertices.getMaxX(v1x, v2x, v3x);
-//			int min_y = vertices.getMinY(v1y, v2y, v3y);
-//			int max_y = vertices.getMaxY(v1y, v2y, v3y);
-//			for(int y = min_y; y <= max_y; ++y) {
-//	              		for(int x = min_x; x <= max_x; ++x) {
-//					r = 148;
-//					g = 215;
-//					b = 219;
-//					image->setPixel(x,y,r,g,b);
-//				}
-//			}
-//		}
-//	}
-
 
 	//write out the image
         image->writeToFile(imgName);
+
 
 	return 0;
 }
