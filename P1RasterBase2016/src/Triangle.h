@@ -15,10 +15,13 @@ public:
 
 	int v1x;
 	int v1y;
+	int v1zi;
 	int v2x;
 	int v2y;
+	int v2zi;
 	int v3x;
 	int v3y;
+	int v3zi;
 	int minX;
 	int maxX;
 	int minY;

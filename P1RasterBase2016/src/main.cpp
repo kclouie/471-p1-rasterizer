@@ -124,7 +124,7 @@ void getratio(std::vector<tinyobj::shape_t> &shapes){
                 }
         }
 	w_width = (maxX-minX) + 1;
-	w_height = (maxY - minY) + 1;
+        w_height = (maxY - minY) + 1;
 	wr = w_width / w_height;
 	pxr = g_width / g_height;
 	if (pxr > wr){
@@ -139,7 +139,7 @@ void getratio(std::vector<tinyobj::shape_t> &shapes){
  	g_height = temph;
 }
 
-void convertcoords(std::vector<tinyobj::shape_t> &shapes, float zbuff[shapes[0].mesh.positions.size() / 3]){
+int convertcoords(std::vector<tinyobj::shape_t> &shapes){
 	// Variables
 	float left, right, bottom, top, scale;
 	int old_width = g_width, old_height = g_height, tempX, tempY, minX = 2147483647, maxX = -2147483647, minY = 2147483647, maxY = -2147483647;
@@ -166,14 +166,19 @@ void convertcoords(std::vector<tinyobj::shape_t> &shapes, float zbuff[shapes[0].
 			if (tempX > maxX) maxX = tempX;
 			if (tempY < minY) minY = tempY;
 			if (tempY > maxY) maxY = tempY;
-			zbuff[v] = shapes[i].mesh.positions[3*v+2];
-cout << "zbuff at " << v << "= " << zbuff[v] << endl;
 		}
 	}
+	return maxX - minX;
+}
 
-//cout << "minX = " << minX << " maxX = " << maxX << " minY = " << minY << " maxY = " << maxY << endl;
-cout << "px_width = " << maxX-minX << " px_height = " << maxY-minY << endl;
-cout << "g_width = " << g_width << " g_height = " << g_height << endl;
+void setzbuff(std::vector<tinyobj::shape_t> &shapes, float zbuff[g_width*g_height], int px_width){
+	for (int i = 0; i < shapes.size(); i++){
+		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+			int x = shapes[i].mesh.positions[3*v+0];
+			int y = shapes[i].mesh.positions[3*v+1];
+			zbuff[px_width * x + y] = shapes[i].mesh.positions[3*v+2];
+		}
+	}
 }
 
 Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
@@ -181,14 +186,17 @@ Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
 	int v1 = shapes[i].mesh.indices[3*v+0];
 	t.v1x = shapes[i].mesh.positions[v1*3];
 	t.v1y = shapes[i].mesh.positions[(v1*3)+1];
+	t.v1zi = v1;
 
 	int v2 = shapes[i].mesh.indices[3*v+1];
 	t.v2x = shapes[i].mesh.positions[v2*3];
         t.v2y = shapes[i].mesh.positions[(v2*3)+1];
+	t.v2zi = v2;
 
 	int v3 = shapes[i].mesh.indices[3*v+2];
 	t.v3x = shapes[i].mesh.positions[v3*3];
         t.v3y = shapes[i].mesh.positions[(v3*3)+1];
+	t.v3zi = v3;
 
 	t.minX = t.getMin(t.v1x, t.v2x, t.v3x);
 	t.maxX = t.getMax(t.v1x, t.v2x, t.v3x);
@@ -267,9 +275,9 @@ int main(int argc, char **argv)
 	cout << "Number of vertices: " << posBuf.size()/3 << endl;
 	cout << "Number of triangles: " << triBuf.size()/3 << endl;
 	// ******** TODO add code to iterate through each triangle and rasterize it ********
-//	vector<float> zbuff;
-	float zbuff[shapes[0].mesh.positions.size() / 3];
-	convertcoords(shapes, zbuff);
+	float zbuff[g_width*g_height];
+	int px_width = convertcoords(shapes);
+	setzbuff(shapes, zbuff, px_width);
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
@@ -283,7 +291,6 @@ int main(int argc, char **argv)
 			float triarea = (((t.v2x-t.v1x)*(t.v3y-t.v1y))-((t.v3x-t.v1x)*(t.v2y-t.v1y)));
                         for (int y = t.minY; y <= t.maxY; ++y){
                                 for (int x = t.minX; x <= t.maxX; ++x){
-//cout << "zbuff at " << zindex << "= " << zbuff[zindex] << endl;
                                         beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
                                         gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         				alpha = 1 - beta - gamma;
