@@ -171,11 +171,12 @@ int convertcoords(std::vector<tinyobj::shape_t> &shapes){
 }
 
 void setzbuff(std::vector<tinyobj::shape_t> &shapes, float zbuff[g_width*g_height], int px_width){
+
 	for (int i = 0; i < shapes.size(); i++){
                 for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
                         int x = shapes[i].mesh.positions[3*v+0];
                         int y = shapes[i].mesh.positions[3*v+1];
-                        zbuff[px_width * x + y] = shapes[i].mesh.positions[3*v+2];
+			zbuff[px_width*x+y] = shapes[i].mesh.positions[3*v+2];
                 }
         }
 }
@@ -290,14 +291,13 @@ int main(int argc, char **argv)
         				alpha = 1 - beta - gamma;
 					currz = alpha*zbuff[px_width*t.v1x+t.v1y] + beta*zbuff[px_width*t.v2x+t.v2y] + gamma*zbuff[px_width*t.v3x+t.v3y];
 					if (((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1))){
-						if (currz > zbuff[px_width*x+y]){
-//
+//						if (currz > zbuff[px_width*x+y]){
 							r = (alpha*148) + (beta*148) + (gamma*148);
                                  			g = (alpha*215) + (beta*215) + (gamma*215);
                                 			b = (alpha*219) + (beta*219) + (gamma*219);
 							image->setPixel(x,y,r,g,b);
 							zbuff[px_width*x+y] = currz;
-						}
+//						}
 					}	
 				}
 			}
