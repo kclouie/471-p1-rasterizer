@@ -15,16 +15,19 @@ public:
 
 	int v1x;
 	int v1y;
+	float v1z;
 	int v1r;
 	int v1g;
 	int v1b;
 	int v2x;
 	int v2y;
+	float v2z;
 	int v2r;
 	int v2g;
 	int v2b;
 	int v3x;
 	int v3y;
+	float v3z;
 	int v3r;
 	int v3g;
 	int v3b;
