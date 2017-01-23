@@ -170,6 +170,15 @@ int convertcoords(std::vector<tinyobj::shape_t> &shapes){
 	return maxX - minX;
 }
 
+void setzbuff(std::vector<tinyobj::shape_t> &shapes, float zbuff[g_width*g_height], int px_width){
+	for (int i = 0; i < shapes.size(); i++){
+                for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+                        int x = shapes[i].mesh.positions[3*v+0];
+                        int y = shapes[i].mesh.positions[3*v+1];
+                        zbuff[px_width * x + y] = shapes[i].mesh.positions[3*v+2];
+                }
+        }
+}
 
 Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
 	Triangle t(0,0,0,0,0,0);
@@ -261,13 +270,7 @@ int main(int argc, char **argv)
 	// ******** TODO add code to iterate through each triangle and rasterize it ********
 	float zbuff[g_width*g_height];
 	int px_width = convertcoords(shapes);
-	for (int i = 0; i < shapes.size(); i++){
-                for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
-                        int x = shapes[i].mesh.positions[3*v+0];
-                        int y = shapes[i].mesh.positions[3*v+1];
-                        zbuff[px_width * x + y] = shapes[i].mesh.positions[3*v+2];
-                }
-        }
+        setzbuff(shapes, zbuff, px_width);
 //	float *zbuff = setzbuff(shapes, px_width);
 	unsigned char r;
 	unsigned char g;
