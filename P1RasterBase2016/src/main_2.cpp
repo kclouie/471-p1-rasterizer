@@ -158,21 +158,18 @@ Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
 	t.v1x = shapes[i].mesh.positions[v1*3];
 	t.v1y = shapes[i].mesh.positions[(v1*3)+1];
 	t.v1z = shapes[i].mesh.positions[(v1*3)+2];
-cout << "shapes v1z " << shapes[i].mesh.positions[v1*3+2] << endl;
 	t.v1r = (255 - 0) / (1 + 1) * (t.v1z - 1) + 255;
 
 	int v2 = shapes[i].mesh.indices[3*v+1];
 	t.v2x = shapes[i].mesh.positions[v2*3];
         t.v2y = shapes[i].mesh.positions[(v2*3)+1];
 	t.v2z = shapes[i].mesh.positions[(v2*3)+2];
-cout << "shapes v2z " << shapes[i].mesh.positions[v2*3+2] << endl;
         t.v2r = (255 - 0) / (1 + 1) * (t.v2z - 1) + 255;
 
 	int v3 = shapes[i].mesh.indices[3*v+2];
 	t.v3x = shapes[i].mesh.positions[v3*3];
         t.v3y = shapes[i].mesh.positions[(v3*3)+1];
 	t.v3z = shapes[i].mesh.positions[(v3*3)+2];
-cout << "shapes v3z " << shapes[i].mesh.positions[v2*3+2] << endl;
         t.v3r = (255 - 0) / (1 + 1) * (t.v3z - 1) + 255;
 
 	t.minX = t.getMin(t.v1x, t.v2x, t.v3x);
@@ -249,7 +246,6 @@ int main(int argc, char **argv)
 	unsigned char b;
 	float alpha, beta, gamma;
 
-	double currz;
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
 			Triangle t = getTriangle(shapes, i, v);
@@ -259,22 +255,23 @@ int main(int argc, char **argv)
                                         beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
                                         gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         				alpha = 1 - beta - gamma;
-					currz = alpha*t.v1z + beta*t.v2z + gamma*t.v3z;
 					if (((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1))){
+						if (mode == 1){
+							double currz = alpha*t.v1z + beta*t.v2z + gamma*t.v3z;
+                                                        if (currz > zbuff[x][y]){
+                                                                r = 50;
+                                                                g = 0;
+                                                                b = ((currz + 1) / (1 + 1)) * (255 - 0) + 0;
+                                                                zbuff[x][y] = currz;
+                                                                image->setPixel(x,y,r,g,b);
+                                                        }
+                                                }
 						if (mode == 2){
-							r = 255;
-							g = 255;
-							b = 255;
+							double curry = alpha*t.v1y + beta*t.v2y + gamma*t.v3y;
+							r = 2;
+							g = 10;
+							b = ((curry + 1) / (1 + 1)) * (255 - 0) + 0;
 							image->setPixel(x,y,r,g,b);
-						}
-						if (mode == 1){		
-							if (currz > zbuff[x][y]){ 
-								r = ((currz + 1) / (1 + 1)) * (255 - 0) + 0;
-                	                 			g = 0;
-                        	        			b = 0;
-								zbuff[x][y] = currz;
-								image->setPixel(x,y,r,g,b); 
-							}
 						}
 					}	
 				}
