@@ -161,7 +161,6 @@ int convertcoords(std::vector<tinyobj::shape_t> &shapes){
 		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
 			tempX = w2pX(shapes, i, 3*v+0, left, right, bottom, top, old_width);
                         tempY = w2pY(shapes, i, 3*v+1, left, right, bottom, top);
-
 			if (tempX < minX) minX = tempX;
 			if (tempX > maxX) maxX = tempX;
 			if (tempY < minY) minY = tempY;
@@ -171,32 +170,20 @@ int convertcoords(std::vector<tinyobj::shape_t> &shapes){
 	return maxX - minX;
 }
 
-void setzbuff(std::vector<tinyobj::shape_t> &shapes, float zbuff[g_width*g_height], int px_width){
-	for (int i = 0; i < shapes.size(); i++){
-		for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
-			int x = shapes[i].mesh.positions[3*v+0];
-			int y = shapes[i].mesh.positions[3*v+1];
-			zbuff[px_width * x + y] = shapes[i].mesh.positions[3*v+2];
-		}
-	}
-}
 
 Triangle getTriangle(std::vector<tinyobj::shape_t> &shapes, int i, int v){
 	Triangle t(0,0,0,0,0,0);
 	int v1 = shapes[i].mesh.indices[3*v+0];
 	t.v1x = shapes[i].mesh.positions[v1*3];
 	t.v1y = shapes[i].mesh.positions[(v1*3)+1];
-	t.v1zi = v1;
 
 	int v2 = shapes[i].mesh.indices[3*v+1];
 	t.v2x = shapes[i].mesh.positions[v2*3];
         t.v2y = shapes[i].mesh.positions[(v2*3)+1];
-	t.v2zi = v2;
 
 	int v3 = shapes[i].mesh.indices[3*v+2];
 	t.v3x = shapes[i].mesh.positions[v3*3];
         t.v3y = shapes[i].mesh.positions[(v3*3)+1];
-	t.v3zi = v3;
 
 	t.minX = t.getMin(t.v1x, t.v2x, t.v3x);
 	t.maxX = t.getMax(t.v1x, t.v2x, t.v3x);
@@ -227,9 +214,6 @@ int getabg(float triarea, Triangle t, int x, int y, Bcoords *bcoords){
 	bcoords->beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
         bcoords->gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         bcoords->alpha = 1 - bcoords->beta - bcoords->gamma;
-
-//	cout << "alpha = " << bcoords->alpha << " beta = " << bcoords->beta << " gamma = " << bcoords->gamma << endl;
-
 	if ((bcoords->alpha >= 0 && bcoords->alpha <= 1) && (bcoords->beta >= 0 && bcoords->beta <= 1) && (bcoords->gamma >= 0 && bcoords->gamma <= 1)){
 		return 1;
 	}
@@ -277,14 +261,21 @@ int main(int argc, char **argv)
 	// ******** TODO add code to iterate through each triangle and rasterize it ********
 	float zbuff[g_width*g_height];
 	int px_width = convertcoords(shapes);
-	setzbuff(shapes, zbuff, px_width);
+	for (int i = 0; i < shapes.size(); i++){
+                for (size_t v = 0; v < shapes[i].mesh.positions.size() / 3; v++){
+                        int x = shapes[i].mesh.positions[3*v+0];
+                        int y = shapes[i].mesh.positions[3*v+1];
+                        zbuff[px_width * x + y] = shapes[i].mesh.positions[3*v+2];
+                }
+        }
+//	float *zbuff = setzbuff(shapes, px_width);
 	unsigned char r;
 	unsigned char g;
 	unsigned char b;
 	float alpha, beta, gamma;
 	Bcoords *bcoords = new Bcoords();
 
-//	int zindex = 0;
+	float currz;
 	for (size_t i = 0; i < shapes.size(); i++){
 		for (size_t v = 0; v < shapes[i].mesh.indices.size() / 3; v++){
 			Triangle t = getTriangle(shapes, i, v);
@@ -294,13 +285,17 @@ int main(int argc, char **argv)
                                         beta = (((t.v1x-t.v3x)*(y-t.v3y))-((x-t.v3x)*(t.v1y-t.v3y)))/triarea;
                                         gamma = (((t.v2x-t.v1x)*(y-t.v1y))-((x-t.v1x)*(t.v2y-t.v1y)))/triarea;
         				alpha = 1 - beta - gamma;
-					if ((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1)){
-						r = (alpha*148) + (beta*148) + (gamma*148);
-                                 		g = (alpha*215) + (beta*215) + (gamma*215);
-                                		b = (alpha*219) + (beta*219) + (gamma*219);
-						image->setPixel(x,y,r,g,b);
+					currz = alpha*zbuff[px_width*t.v1x+t.v1y] + beta*zbuff[px_width*t.v2x+t.v2y] + gamma*zbuff[px_width*t.v3x+t.v3y];
+					if (((alpha >= 0 && alpha <= 1) && (beta >= 0 && beta <= 1) && (gamma >= 0 && gamma <= 1))){
+						if (currz > zbuff[px_width*x+y]){
+//
+							r = (alpha*148) + (beta*148) + (gamma*148);
+                                 			g = (alpha*215) + (beta*215) + (gamma*215);
+                                			b = (alpha*219) + (beta*219) + (gamma*219);
+							image->setPixel(x,y,r,g,b);
+							zbuff[px_width*x+y] = currz;
+						}
 					}	
-//					zindex++;					
 				}
 			}
 		}
@@ -308,7 +303,6 @@ int main(int argc, char **argv)
 
 	//write out the image
         image->writeToFile(imgName);
-
 
 	return 0;
 }
