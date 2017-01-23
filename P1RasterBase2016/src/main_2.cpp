@@ -259,18 +259,18 @@ int main(int argc, char **argv)
 						if (mode == 1){
 							double currz = alpha*t.v1z + beta*t.v2z + gamma*t.v3z;
                                                         if (currz > zbuff[x][y]){
-                                                                r = 50;
-                                                                g = 0;
-                                                                b = ((currz + 1) / (1 + 1)) * (255 - 0) + 0;
+                                                                r = 0;
+                                                                g = ((currz + 1) / (1 + 1)) * (255 - 0) + 0;
+                                                                b = 0;
                                                                 zbuff[x][y] = currz;
                                                                 image->setPixel(x,y,r,g,b);
                                                         }
                                                 }
 						if (mode == 2){
-							double curry = alpha*t.v1y + beta*t.v2y + gamma*t.v3y;
-							r = 2;
-							g = 10;
-							b = ((curry + 1) / (1 + 1)) * (255 - 0) + 0;
+							double curr_y = alpha*t.v1y + beta*t.v2y + gamma*t.v3y;
+							r = 0;
+							g = 200;
+							b = (((y + 1) / (1 + 1)) * (255 - 0) + 0);
 							image->setPixel(x,y,r,g,b);
 						}
 					}	
